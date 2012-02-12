@@ -90,4 +90,4 @@ class XKCDRandom extends BaseRandom
     _setstate: ->
 ```
 
-![Random Number](http://xkcd.com/221/)
+[![Random Number](http://imgs.xkcd.com/comics/random_number.png)](http://xkcd.com/221/)
