@@ -9,13 +9,20 @@ lg = (x) ->
     ((log x) / LN2) >> 0
 
 mod = (x, y) ->
-    js_mod = x % y
-    unless js_mod and (x > 0 ^ y > 0) then js_mod
-    else js_mod + y
+    unless (jsmod = x % y) and (x > 0 ^ y > 0) then jsmod
+    else jsmod + y
+
+mod = (x, y) ->
+    unless (x % y) and (x > 0 ^ y > 0) then x % y else x % y + y
+
+
+extend = (target, sources...) ->
+    for obj in sources
+        target[name] = method for name, method of obj
+    target
+
 
 class NotImplementedError extends Error
-
-class ValueError extends Error
 
 class BaseRandom
 
@@ -38,6 +45,11 @@ class BaseRandom
     seed: (args...) ->
         # Seed the PRNG.
         throw NotImplementedError
+
+    constructor: ->
+        # By default, just seed the PRNG with the date. Some PRNGs
+        # can take longer and more complex seeds.
+        @seed(+new Date)
 
     ## Generally no need to override the methods below in a custom class.
     ## (Under some circumstances it might make sense to implement a custom
@@ -123,7 +135,7 @@ class BaseRandom
             tmp = x[i]; x[i] = x[j]; x[j] = tmp  # swap x[i], x[j]
         x
 
-    gauss: (mu, sigma) ->
+    gauss: _gauss = (mu=0, sigma=1) ->
         # Gaussian distribution. `mu` is the mean, and `sigma` is the standard
         # deviation. Notes:
         #   * uses the "polar method"
@@ -137,8 +149,7 @@ class BaseRandom
             z = u * w; @_next_gauss = v * w
         mu + z * sigma
 
-    # Alias for the `@gauss` function
-    BaseRandom::normalvariate = BaseRandom::gauss
+    normalvariate: _gauss  # Alias for the `@gauss` function
 
     triangular: (low, high, mode) ->
         # Triangular distribution. See wikipedia
@@ -219,8 +230,6 @@ class BaseRandom
         #
         # Warning: a few older sources define the gamma distribution in terms
         # of alpha > -1
-        if alpha <= 0 or beta <= 0
-            throw ValueError 'gammavariate: alpha and beta must be > 0.0'
 
         random = @random
         if alpha > 1
@@ -287,15 +296,50 @@ class BaseRandom
         u = 1 - @random()
         alpha * (pow -log u, 1 / beta)  # Jain, pg. 499; bug fix by Bill Arms
 
+
 class Random extends BaseRandom
+    # Use a Multiply With Carry PRNG, with an XOR-shift successor
+    # Both from Numerical Recipes, 3rd Edition [H1, G1]
+    _randint32: ->
+        @x = 62904 * ((x = @x) & 0xffff) + (x >>> 16)
+        @y = 41874 * ((y = @y) & 0xffff) + (y >>> 16)
+        z = (x << 16) + y
+        z ^= z >>> 13; z ^= z << 17; z ^= z >>> 5
+        z
+
+    seed: (j) ->
+        # these two numbers were arbitrarily chosen
+        @x = 3395989511 ^ j
+        @y = 1716319410 ^ j
+
+    _getstate: -> [@x, @y]
+    _setstate: ([@x, @y]) ->
+
+
+class HighQualityRandom extends BaseRandom
+    # From Numerical Recipes, 3rd Edition
 
     _randint32: ->
+        v = @v; w1 = @w1; @w2 = w2
+        @u = @u * 2891336453 + 1640531513
+        v ^= v >>> 13; v ^= v << 17; v ^= v >>> 5
+        w1 = 33378 * (w1 & 0xffff) + (w1 >>> 16)
+        w2 = 57225 * (w2 & 0xffff) + (w2 >>> 16)
+        @v = v; @w1 = w1; w2 = @w2
+    
+        x = u ^ (u << 9); x ^= x >>> 17; x ^= x << 6
+        y = w1 ^ (w1 << 17); y ^= y >>> 15; y ^= y << 5
+        (x + v) ^ (y + w2)
 
-    seed: ->
+    seed: (j) ->
+        @w1 = 521288629
+        @w2 = 362436069
+        @v = @u = j ^ 2244614371
 
-    _getstate: ->
-
-    _setstate: (state) ->
-        @_seed state...
+    _getstate: -> [@u, @v, @w1, @w2]
+    _setstate: ([@u, @v, @w1, @w2]) ->
 
 
+exports or= (window or this)
+extend exports, {
+    NotImplementedError, BaseRandom, Random, HighQualityRandom}
