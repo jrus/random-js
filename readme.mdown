@@ -80,7 +80,14 @@ for i in [0...1000]
 
 random.setstate(some_state)
 
-# It is quite straight-forward to implement a better PRNG:
+# If the simpler PRNG doesn’t handle every desired use case,
+# one with a much longer period which should pass more rigorous
+# statistical tests is also included, at the cost of a slower
+# running speed:
+
+random = new require('random-py').HighQualityRandom
+
+# It is also quite straight-forward to implement a better custom PRNG:
 {BaseRandom} = require('random-py')
 
 class XKCDRandom extends BaseRandom
