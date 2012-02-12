@@ -81,6 +81,7 @@ for i in [0...1000]
 random.setstate(some_state)
 
 # It is quite straight-forward to implement a better PRNG:
+{BaseRandom} = require('random-py')
 
 class XKCDRandom extends BaseRandom
     # http://xkcd.com/221/
@@ -95,7 +96,6 @@ class DilbertRandom extends BaseRandom
     seed: (j) -> # ignore j
     _getstate: ->
     _setstate: ->
-
 ```
 
 [![Random Number](http://imgs.xkcd.com/comics/random_number.png)](http://xkcd.com/221/)
