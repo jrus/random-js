@@ -2,7 +2,7 @@
 A fairly direct port of the Python `random` module to JavaScript
 ###
 
-{log, sqrt, sin, cos, floor, pow, LN2, exp} = Math
+{log, sqrt, cos, acos, floor, pow, LN2, exp} = Math
 
 lg = (x) ->
     # The log base 2, rounded down to the integer below
