@@ -85,14 +85,14 @@ random.setstate(some_state)
 class XKCDRandom extends BaseRandom
     # http://xkcd.com/221/
     _randint32: -> 4
-    seed: ->
+    seed: (j) -> # ignore j
     _getstate: ->
     _setstate: ->
 
 class DilbertRandom extends BaseRandom
     # http://xkcd.com/221/
     _randint32: -> 9
-    seed: ->
+    seed: (j) -> # ignore j
     _getstate: ->
     _setstate: ->
 
