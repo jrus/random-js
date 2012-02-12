@@ -12,10 +12,6 @@ mod = (x, y) ->
     unless (jsmod = x % y) and (x > 0 ^ y > 0) then jsmod
     else jsmod + y
 
-mod = (x, y) ->
-    unless (x % y) and (x > 0 ^ y > 0) then x % y else x % y + y
-
-
 extend = (target, sources...) ->
     for obj in sources
         target[name] = method for name, method of obj
@@ -49,7 +45,7 @@ class BaseRandom
     constructor: ->
         # By default, just seed the PRNG with the date. Some PRNGs
         # can take longer and more complex seeds.
-        @seed(+new Date)
+        @seed +new Date
 
     ## Generally no need to override the methods below in a custom class.
     ## (Under some circumstances it might make sense to implement a custom
