@@ -72,7 +72,6 @@ random.vonmisesvariate(Math.PI, Math.PI/2)
 
 # it’s possible to save and restore the state of the PRNG, allowing the same
 # set of random numbers to be generated in the same order:
-
 some_state = random.getstate()
 
 for i in [0...1000]
@@ -110,7 +109,7 @@ class XKCDRandom extends BaseRandom
     _setstate: ->
 
 class DilbertRandom extends BaseRandom
-    # http://xkcd.com/221/
+    # http://dilbert.com/fast/2001-10-25/
     _randint32: -> 9
     seed: (j) -> # ignore j
     _getstate: ->
