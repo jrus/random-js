@@ -13,77 +13,92 @@ random = new require('random-py').Random
 ```
 
 Set the PRNG’s seed, so that the precise sequence of numbers can be regenerated. When the class is first constructed, the PRNG is seeded with `+new Date`
+
 ```coffeescript
 random.seed(12345)
 ```
 
 choose a floating point number in the range [0, 1)
+
 ```coffeescript
 random.random()
 ```
 
 choose a floating point number in the range [1.5, 10)
+
 ```coffeescript
 random.uniform(1.5, 10)
 ```
 
 choose an integer N in the range 2 <= N < 50, by 2
+
 ```coffeescript
 random.randrange(2, 50, 2)
 ```
 
 or choose an integer N in the range 0 <= N < 45
+
 ```coffeescript
 random.randrange(45)
 ```
 
 choose an integer N in the range 5 <= N <= 18, endpoint included
+
 ```coffeescript
 random.randint(5, 18)
 ```
 
 randomly choose an element of an array
+
 ```coffeescript
 array = 'abcdefg'.split('')
 random.choice(array)
 ```
 
-```coffeescript
 choose 4 elements from the array, ordered, chosen without replacement
+
+```coffeescript
 random.sample(array, 4)
 ```
 
 randomly shuffle the array, in place
+
 ```coffeescript
 random.shuffle(array)
 ```
 
 choose a random number from the standard normal distribution
+
 ```coffeescript
 random.gauss()
 ```
 
 choose a random number from the normal distribution with mean 5 and standard deviation 5
+
 ```coffeescript
 random.gauss(5, 5)
 ```
 
 choose from the triangular distribution on range [10, 20) with mode (peak) 18
+
 ```coffeescript
 random.triangular(10, 20, 18)
 ```
 
 choose from the triangular distribution on range [0, 1) with mode 0.5
+
 ```coffeescript
 random.triangular()
 ```
 
 choose from the log normal distribution. the log of this distribution is the normal distibution with mean 5 and standard deviation 5
+
 ```coffeescript
 random.lognormvariate(5, 5)
 ```
 
 choose from the Von Mises distribution, an analog of the normal distribution wrapped around a circle, with mean angle pi, and concentration parameter pi/2
+
 ```coffeescript
 random.vonmisesvariate(Math.PI, Math.PI/2)
 ```
@@ -97,6 +112,7 @@ other distributions:
   - weibullvariate
 
 it’s possible to save and restore the state of the PRNG, allowing the same set of random numbers to be generated in the same order:
+
 ```coffeescript
 some_state = random.getstate()
 
@@ -128,6 +144,7 @@ random = new HighQualityRandom
 ```
 
 It is also quite straight-forward to implement a better custom PRNG:
+
 ```coffeescript
 
 class XKCDRandom extends BaseRandom
