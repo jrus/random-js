@@ -1,0 +1,301 @@
+###
+A fairly direct port of the Python `random` module to JavaScript
+###
+
+{log, sqrt, sin, cos, floor, pow, LN2, exp} = Math
+
+lg = (x) ->
+    # The log base 2, rounded down to the integer below
+    ((log x) / LN2) >> 0
+
+mod = (x, y) ->
+    js_mod = x % y
+    unless js_mod and (x > 0 ^ y > 0) then js_mod
+    else js_mod + y
+
+class NotImplementedError extends Error
+
+class ValueError extends Error
+
+class BaseRandom
+
+    ## Override these first four methods in a custom Random class.
+
+    _randint32: ->
+        # Override this method to generate a pseudorandom number
+        throw NotImplementedError
+
+    _getstate: ->
+        # Override this method to fetch the internal PRNG state. Should
+        # return an Array.
+        throw NotImplementedError
+
+    _setstate: (state) ->
+        # Override this method to set the internal PRNG state from the
+        # argument `state`, an Array.
+        throw NotImplementedError
+
+    seed: (args...) ->
+        # Seed the PRNG.
+        throw NotImplementedError
+
+    ## Generally no need to override the methods below in a custom class.
+    ## (Under some circumstances it might make sense to implement a custom
+    ## version of the `random` method.)
+
+    POW_NEG_26 = pow 2, 26
+    random: ->
+        # Return a random float in the range [0, 1), with a full 52
+        # bits of entropy.
+        low_bits = @_randint32() >>> 6
+        high_bits = @_randint32() >>> 6
+        (high_bits + low_bits * POW_NEG_26) * POW_NEG_26
+
+    setstate: ([@_next_gauss, state...]) ->
+        # Set the state of the PRNG. Should accept the output of `@getstate`
+        # as its only argument.
+        @_setstate state
+
+    getstate: ->
+        # Get the internal state of the PRNG. Returns an array of state
+        # information suitable for passing into `@setstate`.
+        [@_next_gauss, @_getstate()...]
+
+    POW_32 = pow 2, 32
+    _bits = {}
+    _randbelow: (n) ->
+        # Return a random int in the range [0,n).
+        # If n > 2^32, then use floating point math
+        if n <= 0x100000000
+            bits = _bits[n] or= (lg n - 1) + 1 # memoize values for `bits`
+            loop
+                r = @_randint32() >>> (32 - bits)
+                r += POW_32 if r < 0
+                break if r < n
+            r
+        else
+            floor @random() * n
+
+    uniform: (a, b) ->
+        # Return a random floating point number N such that a <= N <= b for
+        # a <= b and b <= N <= a for b < a.
+        a + @random() * (b - a)
+
+    randrange: (start, stop, step) ->
+        # Return a random integer N in range `[start...stop] by step`
+        unless stop?
+            @_randbelow start
+        else unless step
+            start + @_randbelow stop - start
+        else
+            start + step * @_randbelow floor (stop - start) / step
+
+    randint: (a, b) ->
+        # Return a random integer N in range `[a..b]`
+        start + @_randbelow 1 + stop - start
+
+    choice: (seq) ->
+        # Return a random element from the non-empty sequence `seq`.
+        seq[@_randbelow seq.length]
+
+    sample: (population, k=1) ->
+        # Return a `k` length list of unique elements chosen from the
+        # `population` sequence. Used for random sampling without replacement.
+        n = population.length
+        if k * 3 > n                       # for large samples, copy the
+            pool = [population...]         # population as a new array
+            for i in [n...n - k] by -1
+                j = @_randbelow i
+                val = pool[j]
+                pool[j] = pool[i - 1]      # move non-chosen item into vacancy
+                val
+        else                               # for small samples, treat an Array
+            selected = []                  # as a set to keep track of selection
+            for i in [0...k] by 1
+                loop break if (j = @_randbelow n) not in selected
+                selected.push j
+                population[j]
+
+    shuffle: (x) ->
+        # Shuffle the sequence x in place.
+        for i in [x.length - 1..1] by -1
+            j = @_randbelow i + 1
+            tmp = x[i]; x[i] = x[j]; x[j] = tmp  # swap x[i], x[j]
+        x
+
+    gauss: (mu, sigma) ->
+        # Gaussian distribution. `mu` is the mean, and `sigma` is the standard
+        # deviation. Notes:
+        #   * uses the "polar method"
+        #   * we generate pairs; keep one in a cache for next time
+        unless (z = @_next_gauss; @_next_gauss = null; z)?
+            until s and s < 1
+                u = 2 * @random() - 1
+                v = 2 * @random() - 1
+                s = u*u + v*v
+            w = sqrt -2 * (log s) / s
+            z = u * w; @_next_gauss = v * w
+        mu + z * sigma
+
+    # Alias for the `@gauss` function
+    BaseRandom::normalvariate = BaseRandom::gauss
+
+    triangular: (low, high, mode) ->
+        # Triangular distribution. See wikipedia
+        unless low? then high = 1; low = 0
+        else unless high? then high = low; low = 0
+        unless mode?
+            c = 0.5
+        else
+            c = (mode - low) / (high - low)
+        u = @random()
+        if u <= c
+            low + (high - low) * sqrt u * c
+        else
+            high - (high - low) * sqrt (1 - u) * (1 - c)
+
+    lognormvariate: (mu, sigma) ->
+        # Log normal distribution.
+        exp @normalvariate mu, sigma
+
+    expovariate: (lambda) ->
+        # Exponential distribution.
+        #
+        # `lambda` is 1.0 divided by the desired mean.  It should be nonzero.
+        # Returned values range from 0 to positive infinity if lambda is positive,
+        # and from negative infinity to 0 if lambda is negative.
+        #
+        # we use 1 - random() instead of random() to preclude the
+        # possibility of taking the log of zero.
+        (- log 1 - @random()) / lambda
+
+    TAU = 2 * Math.PI
+    vonmisesvariate: (mu, kappa) ->
+        # Circular data distribution.
+        #
+        # mu is the mean angle, expressed in radians between 0 and 2*pi, and
+        # kappa is the concentration parameter, which must be greater than or
+        # equal to zero.  If kappa is equal to zero, this distribution reduces
+        # to a uniform random angle over the range 0 to 2*pi.
+        #
+        # Based upon an algorithm published in: Fisher, N.I.,
+        # "Statistical Analysis of Circular Data", Cambridge
+        # University Press, 1993.
+        random = @random
+        return TAU * random() if kappa <= 1e-6
+
+        a = 1 + sqrt 1 + 4 * kappa*kappa
+        b = (1 - sqrt 2) * a / 2 / kappa
+        r = (1 + b*b) / 2 / b
+
+        loop
+            u1 = random()
+
+            z = cos TAU * u1 / 2
+            f = (1 + r * z) / (r + z)
+            c = kappa * (r - f)
+
+            u2 = random()
+            break if u2 < c * (2 - c) or u2 <= c * exp 1 - c
+
+        u3 = random()
+        (mod mu, TAU) + (if u3 > 0.5 then acos f else -acos f)
+
+    LOG4 = log 4
+    SG_MAGICCONST = 1 + log 4.5
+    E = {Math}
+    gammavariate: (alpha, beta) ->
+        # Gamma distribution.  Not the gamma function!
+        #
+        # Conditions on the parameters are alpha > 0 and beta > 0.
+        #
+        # The probability distribution function is:
+        #
+        #             x ** (alpha - 1) * exp( -x / beta)
+        #   pdf(x) =  ----------------------------------
+        #                gamma(alpha) * beta ** alpha
+
+        # alpha > 0, beta > 0, mean is alpha * beta, variance is alpha * beta**2
+        #
+        # Warning: a few older sources define the gamma distribution in terms
+        # of alpha > -1
+        if alpha <= 0 or beta <= 0
+            throw ValueError 'gammavariate: alpha and beta must be > 0.0'
+
+        random = @random
+        if alpha > 1
+            # Uses R.C.H. Cheng, "The generation of Gamma
+            # variables with non-integral shape parameters",
+            # Applied Statistics, (1977), 26, No. 1, p71-74
+            ainv = sqrt 2 * alpha - 1
+            bbb = alpha - LOG4
+            ccc = alpha + ainv
+            loop
+                u1 = random()
+                continue unless 1e-7 < u1 < 1 - 1e-7
+                u2 = 1 - random()
+                v = (log u1 / (1 - u1)) / ainv
+                x = alpha * exp v
+                z = u1 * u1 * u2
+                r = bbb + ccc * v - x
+                break if r + SG_MAGICCONST - 4.5 * z >= 0.0 or r >= log z
+            beta * x
+
+        else if alpha == 1
+            # expovariate(1)
+            loop
+                u = random()
+                break if u > 1e-7
+            -beta * log u
+
+        else   # alpha is between 0 and 1 (exclusive)
+            # Uses ALGORITHM GS of Statistical Computing - Kennedy & Gentle
+            loop
+                u1 = random()
+                b = (E + alpha) / E
+                p = b * u1
+                u2 = random()
+                if p > 1
+                    x = - log (b - p) / alpha
+                    break if u2 <= pow x, alpha - 1
+                else
+                    x = pow p, 1 / alpha
+                    break if u2 <= exp -x
+            beta * x
+
+    betavariate: (alpha, beta) ->
+        # Beta distribution.
+        #
+        # Conditions on the parameters are alpha > 0 and beta > 0.
+        # Returned values range between 0 and 1.
+
+        # This version due to Janne Sinkkonen, and matches all the std
+        # texts (e.g., Knuth Vol 2 Ed 3 pg 134 "the beta distribution").
+        y = @gammavariate alpha, 1
+        if y == 0 then 0
+        else y / (y + @gammavariate beta, 1)
+
+    paretovariate: (alpha) ->
+        # Pareto distribution.  alpha is the shape parameter.
+        u = 1 - @random()
+        1 / (pow u, 1 / alpha)  # Jain, pg. 495
+
+    weibullvariate: (alpha, beta) ->
+        # Weibull distribution.
+        #
+        # alpha is the scale parameter and beta is the shape parameter.
+        u = 1 - @random()
+        alpha * (pow -log u, 1 / beta)  # Jain, pg. 499; bug fix by Bill Arms
+
+class Random extends BaseRandom
+
+    _randint32: ->
+
+    seed: ->
+
+    _getstate: ->
+
+    _setstate: (state) ->
+        @_seed state...
+
+
