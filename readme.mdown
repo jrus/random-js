@@ -12,7 +12,8 @@ Like the Python version, this module provides useful functions for dealing both 
 random = new require('random-py').Random
 
 # set the PRNG’s seed, so that the precise sequence of numbers can be
-# regenerated
+# regenerated. When the class is first constructed, the PRNG is seeded
+# with `+new Date`
 random.seed(12345)
 
 # choose a floating point number in the range [0, 1)
@@ -47,7 +48,35 @@ random.gauss()
 # standard deviation 5
 random.gauss(5, 5)
 
+# choose from the triangular distribution on range [10, 20) with mode (peak)
+# 18
+random.triangular(10, 20, 18)
+
+# choose from the triangular distribution on range [0, 1) with mode 0.5
+random.triangular()
+
 # choose from the log normal distribution. the log of this distribution
 # is the normal distibution with mean 5 and standard deviation 5
 random.lognormvariate(5, 5)
+
+# choose from the Von Mises distribution, an analog of the normal distribution
+# wrapped around a circle, with mean angle pi, and concentration parameter pi/2
+random.vonmisesvariate(Math.PI, Math.PI/2)
+
+# other distributions:
+#   - expovariate
+#   - gammavariate
+#   - betavariate
+#   - paretovariate
+#   - weibullvariate
+
+# it’s possible to save and restore the state of the PRNG, allowing the same
+# set of random numbers to be generated in the same order:
+
+some_state = random.getstate()
+
+for i in [0...1000]
+    random.random()
+
+random.setstate(some_state)
 ```
