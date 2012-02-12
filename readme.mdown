@@ -88,6 +88,15 @@ class XKCDRandom extends BaseRandom
     seed: ->
     _getstate: ->
     _setstate: ->
+
+class DilbertRandom extends BaseRandom
+    # http://xkcd.com/221/
+    _randint32: -> 9
+    seed: ->
+    _getstate: ->
+    _setstate: ->
+
 ```
 
 [![Random Number](http://imgs.xkcd.com/comics/random_number.png)](http://xkcd.com/221/)
+[![Tour of Accounting](http://dilbert.com/dyn/str_strip/000000000/00000000/0000000/000000/00000/2000/300/2318/2318.strip.gif)](http://dilbert.com/fast/2001-10-25/)
