@@ -85,7 +85,6 @@ random.setstate(some_state)
 # If the built-in PRNG doesn’t meet your needs, it is easy to
 # override with your own PRNG. But this module also ships with
 # a couple of alternatives.
-
 {BaseRandom, BuiltinRandom, HighQualityRandom} = require('random-py')
 
 # First, BuiltinRandom generates random floats approximately
@@ -93,10 +92,9 @@ random.setstate(some_state)
 # function twice to construct a random float with a full 52 bits
 # of entropy. Unfortunately, typical JavaScript engines have
 # PRNGs with rather poor performance on statistical tests of
-# randomness, and this class also does not 
-
+# randomness, and this class also does not support setting a
+# custom seed or saving/restoring the PRNG state.
 random = new BuiltinRandom
-
 
 # The other PRNG provided has a much longer period and should pass
 # more rigorous statistical tests, at the cost of running roughly 8–10
@@ -104,7 +102,6 @@ random = new BuiltinRandom
 random = new HighQualityRandom
 
 # It is also quite straight-forward to implement a better custom PRNG:
-
 class XKCDRandom extends BaseRandom
     # http://xkcd.com/221/
     _randint32: -> 4
