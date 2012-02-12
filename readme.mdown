@@ -79,4 +79,15 @@ for i in [0...1000]
     random.random()
 
 random.setstate(some_state)
+
+# It is quite straight-forward to implement a better PRNG:
+
+class XKCDRandom extends BaseRandom
+    # http://xkcd.com/221/
+    _randint32: -> 4
+    seed: ->
+    _getstate: ->
+    _setstate: ->
 ```
+
+![Random Number](http://xkcd.com/221/)
