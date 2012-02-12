@@ -48,8 +48,8 @@ random.gauss()
 # standard deviation 5
 random.gauss(5, 5)
 
-# choose from the triangular distribution on range [10, 20) with mode (peak)
-# 18
+# choose from the triangular distribution on range [10, 20) with
+# mode (peak) 18
 random.triangular(10, 20, 18)
 
 # choose from the triangular distribution on range [0, 1) with mode 0.5
