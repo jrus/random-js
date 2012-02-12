@@ -3,6 +3,7 @@ A fairly direct port of the Python `random` module to JavaScript
 ###
 
 {log, sqrt, cos, acos, floor, pow, LN2, exp} = Math
+POW_32 = pow 2, 32
 
 lg = (x) ->
     # The log base 2, rounded down to the integer below
@@ -69,7 +70,6 @@ class BaseRandom
         # information suitable for passing into `@setstate`.
         [@_next_gauss, @_getstate()...]
 
-    POW_32 = pow 2, 32
     _bits = {}
     _randbelow: (n) ->
         # Return a random int in the range [0,n).
@@ -312,16 +312,34 @@ class Random extends BaseRandom
     _setstate: ([@x, @y]) ->
 
 
+class BuiltinRandom extends BaseRandom
+    # Use the built-in PRNG. Note that with the built-in PRNG,
+    # which is implementation dependant, there is no way to set
+    # the seed or save/restore state. Just directly override
+    # `_randbelow` and `random` instead of bothering with
+    # `_randint32`
+    _rand = Math.random
+    
+    seed: (j) ->  # ignore seed
+    
+    POW_NEG_32 = pow 2, 32
+    random: ->
+        _rand() * POW_NEG_32 + _rand()
+
+    _randbelow: (n) ->
+        floor @random() * n
+
+
 class HighQualityRandom extends BaseRandom
     # From Numerical Recipes, 3rd Edition
 
     _randint32: ->
         v = @v; w1 = @w1; @w2 = w2
-        @u = @u * 2891336453 + 1640531513
+        u = @u * 2891336453 + 1640531513
         v ^= v >>> 13; v ^= v << 17; v ^= v >>> 5
         w1 = 33378 * (w1 & 0xffff) + (w1 >>> 16)
         w2 = 57225 * (w2 & 0xffff) + (w2 >>> 16)
-        @v = v; @w1 = w1; w2 = @w2
+        @u = u; @v = v; @w1 = w1; w2 = @w2
     
         x = u ^ (u << 9); x ^= x >>> 17; x ^= x << 6
         y = w1 ^ (w1 << 17); y ^= y >>> 15; y ^= y << 5
@@ -336,6 +354,6 @@ class HighQualityRandom extends BaseRandom
     _setstate: ([@u, @v, @w1, @w2]) ->
 
 
-exports or= (window or this)
+exports = exports or window or this
 extend exports, {
     NotImplementedError, BaseRandom, Random, HighQualityRandom}
