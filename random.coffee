@@ -39,33 +39,38 @@ class BaseRandom
         # argument `state`, an Array.
         throw NotImplementedError
 
-    seed: (args...) ->
-        # Seed the PRNG.
+    _seed: (args...) ->
+        # Override this method to seed the PRNG
         throw NotImplementedError
 
     constructor: ->
         # By default, just seed the PRNG with the date. Some PRNGs
         # can take longer and more complex seeds.
+        @_next_gauss = null
         @seed +new Date
 
     ## Generally no need to override the methods below in a custom class.
     ## (Under some circumstances it might make sense to implement a custom
     ## version of the `random` method.)
 
+    seed: (args...) =>
+        # Seed the PRNG.
+        @_seed args...
+
     POW_NEG_26 = pow 2, -26
-    random: ->
+    random: =>
         # Return a random float in the range [0, 1), with a full 52
         # bits of entropy.
         low_bits = @_randint32() >>> 6
         high_bits = @_randint32() >>> 6
         (high_bits + low_bits * POW_NEG_26) * POW_NEG_26
 
-    setstate: ([@_next_gauss, state...]) ->
+    setstate: ([@_next_gauss, state...]) =>
         # Set the state of the PRNG. Should accept the output of `@getstate`
         # as its only argument.
         @_setstate state
 
-    getstate: ->
+    getstate: =>
         # Get the internal state of the PRNG. Returns an array of state
         # information suitable for passing into `@setstate`.
         [@_next_gauss, @_getstate()...]
@@ -84,12 +89,12 @@ class BaseRandom
         else
             floor @random() * n
 
-    uniform: (a, b) ->
+    uniform: (a, b) =>
         # Return a random floating point number N such that a <= N <= b for
         # a <= b and b <= N <= a for b < a.
         a + @random() * (b - a)
 
-    randrange: (start, stop, step) ->
+    randrange: (start, stop, step) =>
         # Return a random integer N in range `[start...stop] by step`
         unless stop?
             @_randbelow start
@@ -98,15 +103,15 @@ class BaseRandom
         else
             start + step * @_randbelow floor (stop - start) / step
 
-    randint: (a, b) ->
+    randint: (a, b) =>
         # Return a random integer N in range `[a..b]`
         start + @_randbelow 1 + stop - start
 
-    choice: (seq) ->
+    choice: (seq) =>
         # Return a random element from the non-empty sequence `seq`.
         seq[@_randbelow seq.length]
 
-    sample: (population, k=1) ->
+    sample: (population, k=1) =>
         # Return a `k` length list of unique elements chosen from the
         # `population` sequence. Used for random sampling without replacement.
         n = population.length
@@ -124,14 +129,14 @@ class BaseRandom
                 selected.push j
                 population[j]
 
-    shuffle: (x) ->
+    shuffle: (x) =>
         # Shuffle the sequence x in place.
         for i in [x.length - 1..1] by -1
             j = @_randbelow i + 1
             tmp = x[i]; x[i] = x[j]; x[j] = tmp  # swap x[i], x[j]
         x
 
-    gauss: _gauss = (mu=0, sigma=1) ->
+    gauss: _gauss = (mu=0, sigma=1) =>
         # Gaussian distribution. `mu` is the mean, and `sigma` is the standard
         # deviation. Notes:
         #   * uses the "polar method"
@@ -147,7 +152,7 @@ class BaseRandom
 
     normalvariate: _gauss  # Alias for the `@gauss` function
 
-    triangular: (low, high, mode) ->
+    triangular: (low, high, mode) =>
         # Triangular distribution. See wikipedia
         unless low? then high = 1; low = 0
         else unless high? then high = low; low = 0
@@ -161,11 +166,11 @@ class BaseRandom
         else
             high - (high - low) * sqrt (1 - u) * (1 - c)
 
-    lognormvariate: (mu, sigma) ->
+    lognormvariate: (mu, sigma) =>
         # Log normal distribution.
         exp @normalvariate mu, sigma
 
-    expovariate: (lambda) ->
+    expovariate: (lambda) =>
         # Exponential distribution.
         #
         # `lambda` is 1.0 divided by the desired mean.  It should be nonzero.
@@ -177,7 +182,7 @@ class BaseRandom
         (- log 1 - @random()) / lambda
 
     TAU = 2 * Math.PI
-    vonmisesvariate: (mu, kappa) ->
+    vonmisesvariate: (mu, kappa) =>
         # Circular data distribution.
         #
         # mu is the mean angle, expressed in radians between 0 and 2*pi, and
@@ -188,30 +193,30 @@ class BaseRandom
         # Based upon an algorithm published in: Fisher, N.I.,
         # "Statistical Analysis of Circular Data", Cambridge
         # University Press, 1993.
-        random = @random
-        return TAU * random() if kappa <= 1e-6
+        rand = @random
+        return TAU * rand() if kappa <= 1e-6
 
         a = 1 + sqrt 1 + 4 * kappa*kappa
         b = (1 - sqrt 2) * a / 2 / kappa
         r = (1 + b*b) / 2 / b
 
         loop
-            u1 = random()
+            u1 = rand()
 
             z = cos TAU * u1 / 2
             f = (1 + r * z) / (r + z)
             c = kappa * (r - f)
 
-            u2 = random()
+            u2 = rand()
             break if u2 < c * (2 - c) or u2 <= c * exp 1 - c
 
-        u3 = random()
+        u3 = rand()
         (mod mu, TAU) + (if u3 > 0.5 then acos f else -acos f)
 
     LOG4 = log 4
     SG_MAGICCONST = 1 + log 4.5
     E = {Math}
-    gammavariate: (alpha, beta) ->
+    gammavariate: (alpha, beta) =>
         # Gamma distribution.  Not the gamma function!
         #
         # Conditions on the parameters are alpha > 0 and beta > 0.
@@ -227,7 +232,7 @@ class BaseRandom
         # Warning: a few older sources define the gamma distribution in terms
         # of alpha > -1
 
-        random = @random
+        rand = @random
         if alpha > 1
             # Uses R.C.H. Cheng, "The generation of Gamma
             # variables with non-integral shape parameters",
@@ -236,9 +241,9 @@ class BaseRandom
             bbb = alpha - LOG4
             ccc = alpha + ainv
             loop
-                u1 = random()
+                u1 = rand()
                 continue unless 1e-7 < u1 < 1 - 1e-7
-                u2 = 1 - random()
+                u2 = 1 - rand()
                 v = (log u1 / (1 - u1)) / ainv
                 x = alpha * exp v
                 z = u1 * u1 * u2
@@ -249,17 +254,17 @@ class BaseRandom
         else if alpha == 1
             # expovariate(1)
             loop
-                u = random()
+                u = rand()
                 break if u > 1e-7
             -beta * log u
 
         else   # alpha is between 0 and 1 (exclusive)
             # Uses ALGORITHM GS of Statistical Computing - Kennedy & Gentle
             loop
-                u1 = random()
+                u1 = rand()
                 b = (E + alpha) / E
                 p = b * u1
-                u2 = random()
+                u2 = rand()
                 if p > 1
                     x = - log (b - p) / alpha
                     break if u2 <= pow x, alpha - 1
@@ -268,7 +273,7 @@ class BaseRandom
                     break if u2 <= exp -x
             beta * x
 
-    betavariate: (alpha, beta) ->
+    betavariate: (alpha, beta) =>
         # Beta distribution.
         #
         # Conditions on the parameters are alpha > 0 and beta > 0.
@@ -280,12 +285,12 @@ class BaseRandom
         if y == 0 then 0
         else y / (y + @gammavariate beta, 1)
 
-    paretovariate: (alpha) ->
+    paretovariate: (alpha) =>
         # Pareto distribution.  alpha is the shape parameter.
         u = 1 - @random()
         1 / (pow u, 1 / alpha)  # Jain, pg. 495
 
-    weibullvariate: (alpha, beta) ->
+    weibullvariate: (alpha, beta) =>
         # Weibull distribution.
         #
         # alpha is the scale parameter and beta is the shape parameter.
@@ -303,7 +308,7 @@ class Random extends BaseRandom
         z ^= z >>> 13; z ^= z << 17; z ^= z >>> 5
         z
 
-    seed: (j) ->
+    _seed: (j) ->
         # these two numbers were arbitrarily chosen
         @x = 3395989511 ^ j
         @y = 1716319410 ^ j
@@ -318,12 +323,12 @@ class BuiltinRandom extends BaseRandom
     # the seed or save/restore state. Just directly override
     # `_randbelow` and `random` instead of bothering with
     # `_randint32`
-    
-    seed: (j) ->  # ignore seed
-    
+
+    _seed: (j) =>  # ignore seed
+
     POW_NEG_32 = pow 2, -32
     _rand = Math.random
-    random: ->
+    random: =>
         _rand() * POW_NEG_32 + _rand()
 
     _randbelow: (n) ->
@@ -340,12 +345,12 @@ class HighQualityRandom extends BaseRandom
         w1 = 33378 * (w1 & 0xffff) + (w1 >>> 16)
         w2 = 57225 * (w2 & 0xffff) + (w2 >>> 16)
         @u = u; @v = v; @w1 = w1; w2 = @w2
-    
+
         x = u ^ (u << 9); x ^= x >>> 17; x ^= x << 6
         y = w1 ^ (w1 << 17); y ^= y >>> 15; y ^= y << 5
         (x + v) ^ (y + w2)
 
-    seed: (j) ->
+    _seed: (j) ->
         @w1 = 521288629
         @w2 = 362436069
         @v = @u = j ^ 2244614371
@@ -356,4 +361,8 @@ class HighQualityRandom extends BaseRandom
 
 exports = exports or window or this
 extend exports, {
-    NotImplementedError, BaseRandom, Random, HighQualityRandom}
+    NotImplementedError
+    BaseRandom
+    Random
+    BuiltinRandom
+    HighQualityRandom}
