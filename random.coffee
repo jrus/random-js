@@ -297,9 +297,9 @@ class Random extends BaseRandom
     # Use a Multiply With Carry PRNG, with an XOR-shift successor
     # Both from Numerical Recipes, 3rd Edition [H1, G1]
     _randint32: ->
-        @x = 62904 * ((x = @x) & 0xffff) + (x >>> 16)
-        @y = 41874 * ((y = @y) & 0xffff) + (y >>> 16)
-        z = (x << 16) + y
+        @x = 62904 * (@x & 0xffff) + (@x >>> 16)
+        @y = 41874 * (@y & 0xffff) + (@y >>> 16)
+        z = (@x << 16) + @y
         z ^= z >>> 13; z ^= z << 17; z ^= z >>> 5
         z
 
@@ -318,11 +318,11 @@ class BuiltinRandom extends BaseRandom
     # the seed or save/restore state. Just directly override
     # `_randbelow` and `random` instead of bothering with
     # `_randint32`
-    _rand = Math.random
     
     seed: (j) ->  # ignore seed
     
     POW_NEG_32 = pow 2, -32
+    _rand = Math.random
     random: ->
         _rand() * POW_NEG_32 + _rand()
 
