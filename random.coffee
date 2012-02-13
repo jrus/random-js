@@ -52,7 +52,7 @@ class BaseRandom
     ## (Under some circumstances it might make sense to implement a custom
     ## version of the `random` method.)
 
-    POW_NEG_26 = pow 2, 26
+    POW_NEG_26 = pow 2, -26
     random: ->
         # Return a random float in the range [0, 1), with a full 52
         # bits of entropy.
@@ -322,7 +322,7 @@ class BuiltinRandom extends BaseRandom
     
     seed: (j) ->  # ignore seed
     
-    POW_NEG_32 = pow 2, 32
+    POW_NEG_32 = pow 2, -32
     random: ->
         _rand() * POW_NEG_32 + _rand()
 
