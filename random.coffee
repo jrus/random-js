@@ -115,6 +115,8 @@ class BaseRandom
         # Return a `k` length list of unique elements chosen from the
         # `population` sequence. Used for random sampling without replacement.
         n = population.length
+        if k > n
+            throw Error "can't take a sample bigger than the population"
         if k * 3 > n                       # for large samples, copy the
             pool = [population...]         # population as a new array
             for i in [n...n - k] by -1
