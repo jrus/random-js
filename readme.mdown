@@ -1,10 +1,12 @@
 random-js
 =========
 
-A fairly close port of the Python Standard Library’s random module ([docs][pyranddocs], [source][pyrandsource]), but using a fairly simple Multiply With Carry + XOR-shift PRNG, instead of the Mersenne Twister that Python uses by default. This PRNG should be suitable for most Monte Carlo simulations likely to run in a browser, or for purposes like procedural art. A slower but higher quality PRNG is also provided in the HighQualityRandom class. Only a few methods need be overridden to add a custom PRNG, if this still doesn’t do the trick.
+A fairly close port of the Python Standard Library’s random module ([docs][pyranddocs], [source][pyrandsource]), but using a fairly simple [multiply with carry][mwc] + [xorshift][] PRNG, instead of the Mersenne Twister that Python uses by default. This PRNG should be suitable for most Monte Carlo simulations likely to run in a browser, or for purposes like procedural art. A slower but higher quality PRNG is also provided in the HighQualityRandom class. Only a few methods need be overridden to add a custom PRNG, if this still doesn’t do the trick.
 
   [pyranddocs]: http://docs.python.org/py3k/library/random.html
   [pyrandsource]: http://hg.python.org/cpython/file/tip/Lib/random.py
+  [mwc]: http://en.wikipedia.org/wiki/Multiply-with-carry
+  [xorshift]: http://en.wikipedia.org/wiki/Xorshift
 
 Like the Python version, this module provides useful functions for dealing both with choosing integers/array items, and for generating random numbers following several common statistical distributions.
 
@@ -60,7 +62,7 @@ random.triangular()
 random.lognormvariate(5, 5)
 
 # choose from the Von Mises distribution, an analog of the normal distribution
-# wrapped around a circle, with mean angle pi, and concentration parameter pi/2
+# wrapped around a circle, with mean angle π, and concentration parameter π/2
 random.vonmisesvariate(Math.PI, Math.PI/2)
 
 # other distributions:
@@ -86,32 +88,34 @@ random.setstate(some_state)
 # a couple of alternatives.
 {BaseRandom, BuiltinRandom, HighQualityRandom} = require('random-py')
 
-# First, BuiltinRandom generates random floats approximately
-# 10 times as fast as Random. It calls the built-in Math.random()
-# function twice to construct a random float with a full 52 bits
-# of entropy. Unfortunately, typical JavaScript engines have
-# PRNGs with rather poor performance on statistical tests of
-# randomness, and this class also does not support setting a
-# custom seed or saving/restoring the PRNG state.
+# First, `BuiltinRandom` generates random numbers approximately 10
+# times as fast as `Random`. It calls the built-in `Math.random`
+# function twice to construct a random number between 0 and 1
+# with a full 52 bits of entropy. Unfortunately, typical JavaScript
+# engines have PRNGs with rather poor performance on statistical
+# tests of randomness, and this class also does not support setting
+# a custom seed or saving/restoring the PRNG state.
 random = new BuiltinRandom
+random.random()
 
 # The other PRNG provided has a much longer period and should pass
 # more rigorous statistical tests, at the cost of running roughly 8–10
 # times slower:
 random = new HighQualityRandom
+random.random()
 
 # It is also quite straight-forward to implement a better custom PRNG:
 class XKCDRandom extends BaseRandom
     # http://xkcd.com/221/
     _randint32: -> 4
-    seed: (j) => # ignore j
+    _seed: (j) -> # ignore j
     _getstate: ->
     _setstate: ->
 
 class DilbertRandom extends BaseRandom
     # http://dilbert.com/fast/2001-10-25/
     _randint32: -> 9
-    seed: (j) => # ignore j
+    _seed: (j) -> # ignore j
     _getstate: ->
     _setstate: ->
 ```
