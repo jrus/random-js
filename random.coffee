@@ -51,7 +51,7 @@ class BaseRandom
 
     constructor: ->
         # bind `normalvariate` (def. below as a `gauss` alias) to the instance
-        @normalvariate = bind normalvariate, @
+        @normalvariate = bind @normalvariate, @
 
         # By default, just seed the PRNG with the date. Some PRNGs
         # can take longer and more complex seeds.
