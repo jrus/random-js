@@ -76,10 +76,12 @@ random.vonmisesvariate(Math.PI, Math.PI/2)
 # set of random numbers to be generated in the same order:
 some_state = random.getstate()
 
-for i in [0...1000]
-    random.random()
+a = random.random()
+random.random() for i in [0...1000]
 
 random.setstate(some_state)
+
+random.random() == a
 
 # * * * * * * * * * * * * *
 
