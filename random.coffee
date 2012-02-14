@@ -4,6 +4,7 @@ A fairly direct port of the Python `random` module to JavaScript
 
 {log, sqrt, cos, acos, floor, pow, LN2, exp} = Math
 POW_32 = pow 2, 32
+POW_NEG_32 = pow 2, -32
 
 lg = (x) ->
     # The log base 2, rounded down to the integer below
@@ -63,12 +64,13 @@ class BaseRandom
         @_seed args...
 
     POW_NEG_26 = pow 2, -26
+    POW_NEG_27 = pow 2, -27
     random: =>
-        # Return a random float in the range [0, 1), with a full 52
+        # Return a random float in the range [0, 1), with a full 53
         # bits of entropy.
         low_bits = @_randint32() >>> 6
-        high_bits = @_randint32() >>> 6
-        (high_bits + low_bits * POW_NEG_26) * POW_NEG_26
+        high_bits = @_randint32() >>> 5
+        (high_bits + low_bits * POW_NEG_26) * POW_NEG_27
 
     setstate: ([@_next_gauss, state...]) =>
         # Set the state of the PRNG. Should accept the output of `@getstate`
@@ -350,15 +352,22 @@ class BuiltinRandom extends BaseRandom
     # Use the built-in PRNG. Note that with the built-in
     # PRNG, which is implementation dependant, there is no
     # way to set the seed or save/restore state.
-    
+
     _seed: (j) =>  # ignore seed
 
-    # We just directly override `_randbelow` and `random`
-    # instead of bothering with `_randint32`
-    POW_NEG_32 = pow 2, -32
+    # Test to see if our JavaScript engine creates random numbers
+    # with more than 32 bits of entropy. If so, just use it directly.
+    # Otherwise, combine two calls to `random` into each invocation.
     _rand = Math.random
-    random: =>
-        _rand() * POW_NEG_32 + _rand()
+    _lowbits = -> (_rand() * pow 2, 64) | 0  # `| 0` will chop out bits > 32
+    if _lowbits() | _lowbits() | _lowbits()  # ~1e-18 chance of false negative
+        random: _rand
+    else
+        random: ->
+            _rand() * POW_NEG_32 + _rand()
+
+    _randint32: ->
+        (_rand() * POW_32) | 0
 
     _randbelow: (n) ->
         floor @random() * n
