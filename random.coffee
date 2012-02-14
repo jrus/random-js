@@ -369,9 +369,6 @@ class BuiltinRandom extends BaseRandom
     _randint32: ->
         (_rand() * POW_32) | 0
 
-    _randbelow: (n) ->
-        floor @random() * n
-
 
 exports = exports or window or this
 extend exports, {
