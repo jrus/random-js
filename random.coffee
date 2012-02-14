@@ -18,6 +18,8 @@ extend = (target, sources...) ->
         target[name] = method for name, method of obj
     target
 
+bind = (fn, obj) ->
+    -> fn.apply obj, arguments
 
 class NotImplementedError extends Error
 
@@ -43,15 +45,18 @@ class BaseRandom
         # Override this method to seed the PRNG
         throw NotImplementedError
 
+    ## Generally no need to override the methods below in a custom class.
+    ## (Under some circumstances it might make sense to implement a custom
+    ## version of the `random` method or add to the constructor.)
+
     constructor: ->
+        # bind `normalvariate` (def. below as a `gauss` alias) to the instance
+        @normalvariate = bind normalvariate, @
+
         # By default, just seed the PRNG with the date. Some PRNGs
         # can take longer and more complex seeds.
         @_next_gauss = null
         @seed +new Date
-
-    ## Generally no need to override the methods below in a custom class.
-    ## (Under some circumstances it might make sense to implement a custom
-    ## version of the `random` method.)
 
     seed: (args...) =>
         # Seed the PRNG.
@@ -138,7 +143,7 @@ class BaseRandom
             tmp = x[i]; x[i] = x[j]; x[j] = tmp  # swap x[i], x[j]
         x
 
-    gauss: _gauss = (mu=0, sigma=1) =>
+    gauss: (mu=0, sigma=1) =>
         # Gaussian distribution. `mu` is the mean, and `sigma` is the standard
         # deviation. Notes:
         #   * uses the "polar method"
@@ -152,7 +157,7 @@ class BaseRandom
             z = u * w; @_next_gauss = v * w
         mu + z * sigma
 
-    normalvariate: _gauss  # Alias for the `@gauss` function
+    normalvariate: @::gauss  # Alias for the `gauss` function
 
     triangular: (low, high, mode) =>
         # Triangular distribution. See wikipedia
