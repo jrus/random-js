@@ -11,8 +11,7 @@ lg = (x) ->
     ((log x) / LN2) >> 0
 
 mod = (x, y) ->
-    unless (jsmod = x % y) and (x > 0 ^ y > 0) then jsmod
-    else jsmod + y
+    unless (jsmod = x % y) and (x > 0 ^ y > 0) then jsmod else jsmod + y
 
 extend = (target, sources...) ->
     for obj in sources
