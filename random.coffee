@@ -150,7 +150,8 @@ class BaseRandom
         # deviation. Notes:
         #   * uses the "polar method"
         #   * we generate pairs; keep one in a cache for next time
-        unless (z = @_next_gauss; @_next_gauss = null; z)?
+        if (z = @_next_gauss)? then @_next_gauss = null
+        else
             until s and s < 1
                 u = 2 * @random() - 1
                 v = 2 * @random() - 1
