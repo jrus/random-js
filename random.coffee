@@ -29,21 +29,21 @@ class BaseRandom
 
     _randint32: ->
         # Override this method to generate a pseudorandom number
-        throw NotImplementedError
+        throw new NotImplementedError
 
     _getstate: ->
         # Override this method to fetch the internal PRNG state. Should
         # return an Array.
-        throw NotImplementedError
+        throw new NotImplementedError
 
     _setstate: (state) ->
         # Override this method to set the internal PRNG state from the
         # argument `state`, an Array.
-        throw NotImplementedError
+        throw new NotImplementedError
 
     _seed: (args...) ->
         # Override this method to seed the PRNG
-        throw NotImplementedError
+        throw new NotImplementedError
 
     ## Generally no need to override the methods below in a custom class.
     ## (Under some circumstances it might make sense to implement a custom
@@ -122,7 +122,7 @@ class BaseRandom
         # `population` sequence. Used for random sampling without replacement.
         n = population.length
         if k > n
-            throw Error "can't take a sample bigger than the population"
+            throw new Error "can't take a sample bigger than the population"
         if k * 3 > n                       # for large samples, copy the
             pool = [population...]         # population as a new array
             for i in [n...n - k] by -1
