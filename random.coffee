@@ -2,13 +2,13 @@
 A fairly direct port of the Python `random` module to JavaScript
 ###
 
-{log, sqrt, cos, acos, floor, pow, LN2, exp} = Math
+{log, sqrt, cos, acos, floor, pow, LOG2E, exp} = Math
 POW_32 = pow 2, 32
 POW_NEG_32 = pow 2, -32
 
 lg = (x) ->
     # The log base 2, rounded down to the integer below
-    ((log x) / LN2) >> 0
+    (LOG2E * log x) >> 0
 
 mod = (x, y) ->
     unless (jsmod = x % y) and (x > 0 ^ y > 0) then jsmod else jsmod + y
