@@ -8,7 +8,7 @@ POW_NEG_32 = pow 2, -32
 
 lg = (x) ->
     # The log base 2, rounded down to the integer below
-    (LOG2E * log x) >> 0
+    (LOG2E * log x + 1e-10) >> 0
 
 mod = (x, y) ->
     unless (jsmod = x % y) and (x > 0 ^ y > 0) then jsmod else jsmod + y
