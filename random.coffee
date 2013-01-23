@@ -111,7 +111,7 @@ class BaseRandom
 
     randint: (a, b) =>
         # Return a random integer N in range `[a..b]`
-        start + @_randbelow 1 + stop - start
+        a + @_randbelow 1 + b - a
 
     choice: (seq) =>
         # Return a random element from the non-empty sequence `seq`.
