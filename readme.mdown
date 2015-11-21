@@ -123,4 +123,4 @@ class DilbertRandom extends BaseRandom
 ```
 
 [![Random Number](http://imgs.xkcd.com/comics/random_number.png)](http://xkcd.com/221/)
-[![Tour of Accounting](http://dilbert.com/dyn/str_strip/000000000/00000000/0000000/000000/00000/2000/300/2318/2318.strip.gif)](http://dilbert.com/fast/2001-10-25/)
+[![Tour of Accounting](http://assets.amuniversal.com/321a39e06d6401301d80001dd8b71c47)](http://dilbert.com/strip/2001-10-25)
