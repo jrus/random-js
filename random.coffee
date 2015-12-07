@@ -370,8 +370,8 @@ class BuiltinRandom extends BaseRandom
         (_rand() * POW_32) | 0
 
 
-exports = exports or window or this
-extend exports, {
+exp = exports or window or this
+extend exp, {
     NotImplementedError
     BaseRandom
     Random
